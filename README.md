@@ -1,0 +1,5 @@
+# Installation
+
+    composer install
+    ./phpunit
+
