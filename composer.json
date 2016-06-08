@@ -1,0 +1,19 @@
+{
+    "name": "avallac/php-amqp-daemon-manager",
+    "license": "MIT",
+    "type": "library",
+    "homepage": "https://github.com/avallac/amqp-daemon-manager",
+    "authors": [
+        {
+            "name": "Petr Petrenko",
+            "role": "maintainer"
+        }
+    ],
+    "require": {
+        "php-amqplib/php-amqplib": "^2.6"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^5.4",
+        "mockery/mockery": "^0.9.5"
+    }
+}
