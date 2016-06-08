@@ -9,6 +9,11 @@
             "role": "maintainer"
         }
     ],
+    "autoload": {
+        "psr-0": {
+            "PhpAmqDaemonManager": "src/"
+        }
+    },
     "require": {
         "php-amqplib/php-amqplib": "^2.6"
     },
