@@ -11,7 +11,7 @@ class AgentTest extends \PHPUnit_Framework_TestCase
         $channel = \Mockery::mock('\PhpAmqpLib\Channel\AMQPChannel');
         $channel->shouldReceive('queue_declare')->with("")->andReturn(['qName'])->once();
         $channel->shouldReceive('basic_consume')->with(
-            "adminQ",
+            "qName",
             "",
             false,
             false,
@@ -113,7 +113,11 @@ class AgentTest extends \PHPUnit_Framework_TestCase
         }
         $channel->shouldReceive('basic_ack')->with($tags['message'])->once($tags['message']);
         $message = \Mockery::mock('\PhpAmqpLib\Message\AMQPMessage');
-        $message->body = json_encode(['status' => $newStatusId, 'role' => 'testRole']);
+        $message->body = (string)new MQMessage([
+            'status' => $newStatusId,
+            'role' => 'testRole',
+            'command' => 'agent.status.update'
+        ]);
         $message->delivery_info = ['delivery_tag' => $tags['message']];
         $func($message);
         $this->assertSame($newStatus['testRole'], $agent->getStatusRole('testRole'));
@@ -136,18 +140,14 @@ class AgentTest extends \PHPUnit_Framework_TestCase
         list($agent, $func, $channel) = $this->getManagementCallBack();
         $channel->shouldReceive('basic_publish')->with(
             \Mockery::on(function ($msg) {
-                return $msg->body === json_encode([
-                        'hostname' => 'testHostName',
-                        'role' => 'testRole',
-                        'status' => 0
-                ]);
+                return 1 === $msg->body->get('status');
             }),
             '',
             'adminQ'
         )->once();
         $this->updateClass($agent, 'roles', [
             'testRole' => [
-                'status' => 0,
+                'status' => 1,
                 'lastUpdated' => 0
             ]
         ]);

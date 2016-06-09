@@ -2,6 +2,9 @@
 
 namespace PhpAmqDaemonManager;
 
+use PhpAmqDaemonManager\Message\AbstractMessage;
+use PhpAmqDaemonManager\Message\AgentStatusUpdate;
+use PhpAmqDaemonManager\Message\BeholderStatusUpdate;
 use \PhpAmqpLib\Channel\AMQPChannel;
 use \PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -14,9 +17,11 @@ class Agent
     /** @var AMQPChannel channel */
     protected $channel;
     protected $roles = [];
-    /** @var AbstractConnection AbstractConnection */
+    /** @var AbstractConnection  */
     protected $connection;
     protected $roundTimer;
+    /** @var MessageManager */
+    protected $messageManager;
 
     public function __construct(AbstractConnection $connection, $hostname, $adminQueue, $roundTimer = 60)
     {
@@ -26,6 +31,7 @@ class Agent
         $this->hostname = $hostname;
         $this->adminQueue = $adminQueue;
         $this->roundTimer = $roundTimer;
+        $this->messageManager = new MessageManager();
         $this->initManagementConsume();
     }
 
@@ -36,12 +42,11 @@ class Agent
 
     protected function initManagementConsume()
     {
-        $callbackMng = function ($rabbitMessage) {
-            $message = json_decode($rabbitMessage->body, true);
-            $role = $message['role'];
+        $this->messageManager->bind(new AgentStatusUpdate(function (MQMessage $message) {
+            $role = $message->get('role');
             if (isset($this->roles[$role])) {
-                if ($this->roles[$role]['status'] !== $message['status']) {
-                    if ($message['status'] == 1) {
+                if ($this->roles[$role]['status'] !== $message->get('status')) {
+                    if ($message->get('status') == 1) {
                         $workQueue = $this->roles[$role]['workQueue'];
                         $fnUserCallBack = $this->roles[$role]['userCallBack'];
                         $this->roles[$role]['consumeTag'] = $this->basicConsume($workQueue, $fnUserCallBack);
@@ -49,13 +54,16 @@ class Agent
                         $this->channel->basic_cancel($this->roles[$role]['consumeTag']);
                         $this->roles[$role]['consumeTag'] = null;
                     }
-                    $this->roles[$role]['status'] = $message['status'];
+                    $this->roles[$role]['status'] = $message->get('status');
                 }
                 $this->roles[$role]['lastUpdated'] = 0;
             }
+        }));
+        $callbackMng = function ($rabbitMessage) {
+            $this->messageManager->handle($rabbitMessage);
             $this->channel->basic_ack($rabbitMessage->delivery_info['delivery_tag']);
         };
-        return $this->basicConsume($this->adminQueue, $callbackMng);
+        $this->basicConsume($this->myQueueName, $callbackMng);
     }
 
     public function bindRole($roleName, $workQueue, $fnUserCallBack)
@@ -79,15 +87,22 @@ class Agent
         $now = microtime(true);
         foreach ($this->roles as $roleName => $roleInfo) {
             if ($now - $roleInfo['lastUpdated'] > $this->roundTimer) {
-                $msg = new AMQPMessage(json_encode([
+                $update = [
                     'hostname'=> $this->hostname,
                     'role' => $roleName,
-                    'status' => $roleInfo['status']
-                ]));
-                $this->channel->basic_publish($msg, '', $this->adminQueue);
+                    'status' => $roleInfo['status'],
+                    'queue' => $this->myQueueName,
+                ];
                 $this->roles[$roleName]['lastUpdate'] = $now;
+                $this->createMessage(new BeholderStatusUpdate(), $update);
             }
         }
+    }
+
+    public function createMessage(AbstractMessage $message, $update)
+    {
+        $msg = new AMQPMessage($message->create($update));
+        $this->channel->basic_publish($msg, '', $this->adminQueue);
     }
 
     public function run()
