@@ -2,7 +2,7 @@
 
 namespace PhpAmqDaemonManager;
 
-class AgentTest extends \PHPUnit_Framework_TestCase
+class MinionTest extends \PHPUnit_Framework_TestCase
 {
     
     protected function getManagementCallBack()
@@ -24,7 +24,7 @@ class AgentTest extends \PHPUnit_Framework_TestCase
         );
         $connection = \Mockery::mock('\PhpAmqpLib\Connection\AbstractConnection');
         $connection->shouldReceive('channel')->andReturn($channel);
-        $agent = new Agent($connection, 'testHostName', 'adminQ');
+        $agent = new Minion($connection, 'testHostName', 'adminQ');
         return [$agent, $managementCallBack, $channel];
     }
 
@@ -32,11 +32,12 @@ class AgentTest extends \PHPUnit_Framework_TestCase
     {
         list($agent, $func, $channel) = $this->getManagementCallBack();
         $agent->bindRole('testRole', 'testQ', 'userCallBack');
-        $status = $agent->getStatusRole('testRole');
+        $status = $agent->getRole('testRole');
+        $status['messageManager'] = 'messageManager';
         $this->assertSame([
             'status' => 0,
             'workQueue' => 'testQ',
-            'userCallBack' => 'userCallBack',
+            'messageManager' => 'messageManager',
             'consumeTag' => null,
             'lastUpdated' => 0
         ], $status);
@@ -108,7 +109,7 @@ class AgentTest extends \PHPUnit_Framework_TestCase
             $channel->shouldReceive('basic_cancel')->with($tags['consume'])->once();
         } else {
             $channel->shouldReceive('basic_consume')
-                ->with('testQ', '', false, false, false, false, 'userCallBack')
+                ->with('testQ', '', false, false, false, false, \Mockery::on(function() { return true;}))
                 ->once()->andReturn($tags['consume']);
         }
         $channel->shouldReceive('basic_ack')->with($tags['message'])->once($tags['message']);
@@ -120,7 +121,7 @@ class AgentTest extends \PHPUnit_Framework_TestCase
         ]);
         $message->delivery_info = ['delivery_tag' => $tags['message']];
         $func($message);
-        $this->assertSame($newStatus['testRole'], $agent->getStatusRole('testRole'));
+        $this->assertSame($newStatus['testRole'], $agent->getRole('testRole'));
     }
 
     public function testDontSendReport()

@@ -18,7 +18,7 @@ abstract class AbstractMessage
     {
         foreach ($this->require as $field) {
             if (!$message->exists($field)) {
-                throw new NotValidMessageViolationException($this->getCommand().": can't find ".$field);
+                throw new NotValidMessageViolationException($this->getCommand().": can't find ".'"'.$field.'"');
             }
         }
         return true;
@@ -33,6 +33,9 @@ abstract class AbstractMessage
     {
         $arr = ['command' => $this->getCommand()];
         foreach ($this->require as $item) {
+            if (!array_key_exists($item, $params)) {
+                throw new NotValidMessageViolationException($this->getCommand().": can't find ".'"'.$item.'"');
+            }
             $arr[$item] = $params[$item];
         }
         $outM = new MQMessage($arr);

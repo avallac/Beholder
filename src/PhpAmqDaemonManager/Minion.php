@@ -9,7 +9,7 @@ use \PhpAmqpLib\Channel\AMQPChannel;
 use \PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-class Agent
+class Minion
 {
     protected $myQueueName;
     protected $hostname;
@@ -42,42 +42,51 @@ class Agent
 
     protected function initManagementConsume()
     {
+
         $this->messageManager->bind(new AgentStatusUpdate(function (MQMessage $message) {
             $role = $message->get('role');
             if (isset($this->roles[$role])) {
                 if ($this->roles[$role]['status'] !== $message->get('status')) {
                     if ($message->get('status') == 1) {
+                        $fnCallback = function ($rabbitMessage) use ($role) {
+                            $this->roles[$role]['messageManager']->handle($rabbitMessage);
+                            $this->channel->basic_ack($rabbitMessage->delivery_info['delivery_tag']);
+                        };
                         $workQueue = $this->roles[$role]['workQueue'];
-                        $fnUserCallBack = $this->roles[$role]['userCallBack'];
-                        $this->roles[$role]['consumeTag'] = $this->basicConsume($workQueue, $fnUserCallBack);
+                        $this->roles[$role]['consumeTag'] = $this->basicConsume($workQueue, $fnCallback);
                     } else {
                         $this->channel->basic_cancel($this->roles[$role]['consumeTag']);
                         $this->roles[$role]['consumeTag'] = null;
                     }
                     $this->roles[$role]['status'] = $message->get('status');
+                    $this->roles[$role]['lastUpdated'] = 0;
                 }
-                $this->roles[$role]['lastUpdated'] = 0;
             }
         }));
-        $callbackMng = function ($rabbitMessage) {
+        $fnCallback = function ($rabbitMessage) {
             $this->messageManager->handle($rabbitMessage);
             $this->channel->basic_ack($rabbitMessage->delivery_info['delivery_tag']);
         };
-        $this->basicConsume($this->myQueueName, $callbackMng);
+        $this->basicConsume($this->myQueueName, $fnCallback);
     }
 
-    public function bindRole($roleName, $workQueue, $fnUserCallBack)
+    public function bindRole($roleName, $workQueue)
     {
         $this->roles[$roleName] = [
             'status' => 0,
             'workQueue' => $workQueue,
-            'userCallBack' => $fnUserCallBack,
+            'messageManager' => new MessageManager(),
             'consumeTag' => null,
             'lastUpdated' => 0
         ];
     }
 
-    public function getStatusRole($roleName)
+    public function getMessageManager()
+    {
+        return $this->messageManager;
+    }
+
+    public function getRole($roleName)
     {
         return $this->roles[$roleName];
     }
@@ -85,15 +94,15 @@ class Agent
     public function sendReport()
     {
         $now = microtime(true);
-        foreach ($this->roles as $roleName => $roleInfo) {
-            if ($now - $roleInfo['lastUpdated'] > $this->roundTimer) {
+        foreach (array_keys($this->roles) as $roleName) {
+            if ($now - $this->roles[$roleName]['lastUpdated'] > $this->roundTimer) {
                 $update = [
                     'hostname'=> $this->hostname,
                     'role' => $roleName,
-                    'status' => $roleInfo['status'],
+                    'status' => $this->roles[$roleName]['status'],
                     'queue' => $this->myQueueName,
                 ];
-                $this->roles[$roleName]['lastUpdate'] = $now;
+                $this->roles[$roleName]['lastUpdated'] = $now;
                 $this->createMessage(new BeholderStatusUpdate(), $update);
             }
         }
@@ -108,8 +117,9 @@ class Agent
     public function run()
     {
         $this->sendReport();
+        $socket = $this->connection->getSocket();
         while (count($this->channel->callbacks)) {
-            $read = array($this->connection);
+            $read = [$socket];
             $write = null;
             $except = null;
             $changeStreamsCount = stream_select($read, $write, $except, $this->roundTimer);
