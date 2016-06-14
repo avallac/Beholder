@@ -13,6 +13,7 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $connection->shouldReceive('channel')->andReturn($channel);
         $channel->shouldReceive('queue_declare')->andReturn(['minionQ']);
         $channel->shouldReceive('basic_consume');
+        $channel->shouldReceive('basic_qos');
 
         $channel->shouldReceive('basic_publish')->with(
             \Mockery::on(function ($m) use (&$beholder, &$agent) {

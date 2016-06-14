@@ -22,6 +22,7 @@ class MinionTest extends \PHPUnit_Framework_TestCase
                 return true;
             })
         );
+        $channel->shouldReceive('basic_qos');
         $connection = \Mockery::mock('\PhpAmqpLib\Connection\AbstractConnection');
         $connection->shouldReceive('channel')->andReturn($channel);
         $agent = new Minion($connection, 'testHostName', 'adminQ');
