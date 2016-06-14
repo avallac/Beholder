@@ -32,9 +32,9 @@ class Beholder
 
     protected function changeMinionStatus($host, $role, $status)
     {
-        if ($this->minions[$host][$role]['status'] !== $status) {
+        if ($this->minions[$host][$role]['status'] != $status) {
             $this->minions[$host][$role]['status'] = $status;
-            $this->sendUpdateStatusToMinion($role, $status);
+            $this->sendUpdateStatusToMinion($host, $role);
         }
     }
 
