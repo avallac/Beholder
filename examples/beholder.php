@@ -1,7 +1,7 @@
 <?php
 
 use \PhpAmqpLib\Connection\AMQPStreamConnection;
-use \PhpAmqDaemonManager\Beholder;
+use \Beholder\Beholder;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 

@@ -2,7 +2,7 @@
 
 namespace Beholder;
 
-use PhpAmqDaemonManager\Message\BeholderStatusGet;
+use Beholder\Message\BeholderStatusGet;
 use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 

@@ -8,6 +8,6 @@ require_once __DIR__ . '/Message/SimpleMessage.php';
 
 $connection = new AMQPStreamConnection('localhost', 5672, 'guest', 'guest', '/');
 $channel = $connection->channel();
-$message = new \PhpAmqDaemonManager\Message\SimpleMessage();
+$message = new \Beholder\Message\SimpleMessage();
 $msg = new AMQPMessage($message->create(['text' => 'Hello']));
 $channel->basic_publish($msg, '', 'parserQ');

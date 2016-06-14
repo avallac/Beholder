@@ -1,8 +1,8 @@
 <?php
 
 use \PhpAmqpLib\Connection\AMQPStreamConnection;
-use \PhpAmqDaemonManager\Minion;
-use \PhpAmqDaemonManager\Message\SimpleMessage;
+use \Beholder\Minion;
+use \Beholder\Message\SimpleMessage;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/Message/SimpleMessage.php';
