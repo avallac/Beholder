@@ -2,6 +2,7 @@
 
 namespace Beholder;
 
+use Beholder\Message\AdminMinionStatus;
 use Beholder\Message\BeholderStatusGet;
 use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -24,9 +25,12 @@ class Admin
         $ret = [];
         $tag = null;
         $fn = function ($message) use (&$ret, &$tag) {
+            $messageTemplate = new AdminMinionStatus();
             $m = new MQMessage($message->body);
-            $ret = $m->get('text');
-            $this->channel->basic_cancel($tag);
+            if ($messageTemplate->validate($m)) {
+                $ret = $m->get('minions');
+                $this->channel->basic_cancel($tag);
+            }
         };
         $tag = $this->channel->basic_consume($this->myQueueName, '', false, false, false, false, $fn);
         $message = new BeholderStatusGet();
