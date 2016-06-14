@@ -3,11 +3,11 @@
 namespace Beholder;
 
 use Beholder\Message\AbstractMessage;
+use Beholder\Message\AdminMinionStatus;
 use Beholder\Message\AgentStatusUpdate;
 use Beholder\Message\BeholderAdminStatus;
 use Beholder\Message\BeholderStatusGet;
 use Beholder\Message\BeholderStatusUpdate;
-use Beholder\Message\SimpleMessage;
 use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -70,7 +70,7 @@ class Beholder
 
         $this->messageManager->bind(new BeholderStatusGet(function (MQMessage $message) {
             $q = $message->get('queue');
-            $this->createMessage(new SimpleMessage(), ['text' => $this->minions], $q);
+            $this->createMessage(new AdminMinionStatus(), ['minions' => $this->minions], $q);
         }));
 
         $callbackMng = function ($rabbitMessage) {
