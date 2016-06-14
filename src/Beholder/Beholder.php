@@ -62,6 +62,7 @@ class Beholder
             if ($this->minions[$m->get('hostname')][$m->get('role')]['status'] !== $m->get('status')) {
                 $this->sendUpdateStatusToMinion($m->get('hostname'), $m->get('role'));
             }
+            $this->minions[$m->get('hostname')][$m->get('role')]['curStatus'] = $m->get('status');
         }));
 
         $this->messageManager->bind(new BeholderAdminStatus(function (MQMessage $m) {
