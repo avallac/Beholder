@@ -83,7 +83,7 @@ class Minion
 
     public function setMessageManager($roleName, $manager)
     {
-        $this->roles[$roleName] = $manager;
+        $this->roles[$roleName]['messageManager'] = $manager;
     }
 
     public function getMessageManager()
