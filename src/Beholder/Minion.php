@@ -27,6 +27,7 @@ class Minion
     {
         $this->connection = $connection;
         $this->channel = $this->connection->channel();
+        $this->channel->basic_qos(0, 1, true);
         list($this->myQueueName, ,) = $this->channel->queue_declare("");
         $this->hostname = $hostname;
         $this->adminQueue = $adminQueue;

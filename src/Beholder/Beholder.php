@@ -41,7 +41,8 @@ class Beholder
     protected function sendUpdateStatusToMinion($host, $role)
     {
         $status = $this->minions[$host][$role]['status'];
-        if ($q = $this->minions[$host][$role]['queue']) {
+        if (isset($this->minions[$host][$role]['queue'])) {
+            $q = $this->minions[$host][$role]['queue'];
             $this->createMessage(new AgentStatusUpdate(), ['role' => $role, 'status' => $status], $q);
         }
         if ($fn = $this->fn) {
