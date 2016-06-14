@@ -33,7 +33,7 @@ class Admin
         $msg = new AMQPMessage($message->create(['queue' => $this->myQueueName]));
         $this->channel->basic_publish($msg, '', $this->adminQueue);
         while (count($this->channel->callbacks)) {
-            $this->channel->wait();
+            $this->channel->wait(null, false, 3);
         }
         return $ret;
     }
