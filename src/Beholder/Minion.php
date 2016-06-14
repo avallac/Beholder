@@ -1,13 +1,13 @@
 <?php
 
-namespace PhpAmqDaemonManager;
+namespace Beholder;
 
-use PhpAmqDaemonManager\Message\AbstractMessage;
-use PhpAmqDaemonManager\Message\AgentStatusUpdate;
-use PhpAmqDaemonManager\Message\BeholderStatusUpdate;
+use Beholder\Message\AbstractMessage;
+use Beholder\Message\AgentStatusUpdate;
+use Beholder\Message\BeholderStatusUpdate;
 use \PhpAmqpLib\Channel\AMQPChannel;
 use \PhpAmqpLib\Connection\AbstractConnection;
-use PhpAmqpLib\Message\AMQPMessage;
+use \PhpAmqpLib\Message\AMQPMessage;
 
 class Minion
 {

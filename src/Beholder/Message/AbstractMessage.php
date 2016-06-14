@@ -1,9 +1,9 @@
 <?php
 
-namespace PhpAmqDaemonManager\Message;
+namespace Beholder\Message;
 
-use PhpAmqDaemonManager\Exception\NotValidMessageViolationException;
-use PhpAmqDaemonManager\MQMessage;
+use Beholder\Exception\NotValidMessageViolationException;
+use Beholder\MQMessage;
 
 abstract class AbstractMessage
 {

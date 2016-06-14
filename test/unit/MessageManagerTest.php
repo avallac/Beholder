@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpAmqDaemonManager;
+namespace Beholder;
 
 class MessageManagerTest extends \PHPUnit_Framework_TestCase
 {
@@ -10,7 +10,7 @@ class MessageManagerTest extends \PHPUnit_Framework_TestCase
     public function setUp()
     {
         $this->manager = new MessageManager();
-        $message = \Mockery::mock('\PhpAmqDaemonManager\Message\AbstractMessage');
+        $message = \Mockery::mock('\Beholder\Message\AbstractMessage');
         $message->shouldReceive('handle')->andReturn('test string');
         $message->shouldReceive('register')->andReturn('test.test');
         $message->shouldReceive('requiredFields')->andReturn(['testField']);
@@ -26,7 +26,7 @@ class MessageManagerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \PhpAmqDaemonManager\Exception\CantFindMessageViolationException
+     * @expectedException \Beholder\Exception\CantFindMessageViolationException
      */
     public function testHandleException()
     {
@@ -40,13 +40,13 @@ class MessageManagerTest extends \PHPUnit_Framework_TestCase
     public function testGetMessageOk()
     {
         $this->assertInstanceOf(
-            '\PhpAmqDaemonManager\Message\AbstractMessage',
+            '\Beholder\Message\AbstractMessage',
             $this->manager->getMessage('test.test')
         );
     }
 
     /**
-     * @expectedException \PhpAmqDaemonManager\Exception\CantFindMessageViolationException
+     * @expectedException \Beholder\Exception\CantFindMessageViolationException
      */
     public function testGetMessageBad()
     {
@@ -59,7 +59,7 @@ class MessageManagerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \PhpAmqDaemonManager\Exception\CantFindMessageViolationException
+     * @expectedException \Beholder\Exception\CantFindMessageViolationException
      */
     public function testRequiredFieldsBad()
     {

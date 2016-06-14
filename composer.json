@@ -1,5 +1,5 @@
 {
-    "name": "avallac/php-amqp-daemon-manager",
+    "name": "avallac/Beholder",
     "license": "MIT",
     "type": "library",
     "homepage": "https://github.com/avallac/amqp-daemon-manager",
@@ -11,7 +11,7 @@
     ],
     "autoload": {
         "psr-0": {
-            "PhpAmqDaemonManager": "src/"
+            "Beholder": "src/"
         }
     },
     "require": {

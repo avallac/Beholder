@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpAmqDaemonManager\Exception;
+namespace Beholder\Exception;
 
 class NotValidMessageViolationException extends \Exception
 {

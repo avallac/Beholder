@@ -1,13 +1,13 @@
 <?php
 
-namespace PhpAmqDaemonManager;
+namespace Beholder;
 
-use PhpAmqDaemonManager\Message\AbstractMessage;
-use PhpAmqDaemonManager\Message\AgentStatusUpdate;
-use PhpAmqDaemonManager\Message\BeholderAdminStatus;
-use PhpAmqDaemonManager\Message\BeholderStatusGet;
-use PhpAmqDaemonManager\Message\BeholderStatusUpdate;
-use PhpAmqDaemonManager\Message\SimpleMessage;
+use Beholder\Message\AbstractMessage;
+use Beholder\Message\AgentStatusUpdate;
+use Beholder\Message\BeholderAdminStatus;
+use Beholder\Message\BeholderStatusGet;
+use Beholder\Message\BeholderStatusUpdate;
+use Beholder\Message\SimpleMessage;
 use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpAmqDaemonManager;
+namespace Beholder;
 
 class GeneralTest extends \PHPUnit_Framework_TestCase
 {

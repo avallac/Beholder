@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpAmqDaemonManager;
+namespace Beholder;
 
 class MQMessageTest extends \PHPUnit_Framework_TestCase
 {
@@ -29,7 +29,7 @@ class MQMessageTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \PhpAmqDaemonManager\Exception\CantFindFieldInMessageViolationException
+     * @expectedException \Beholder\Exception\CantFindFieldInMessageViolationException
      */
     public function testGetBad()
     {

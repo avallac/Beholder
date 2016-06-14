@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpAmqDaemonManager\Message;
+namespace Beholder\Message;
 
 class BeholderStatusGet extends AbstractCallBackMessage
 {

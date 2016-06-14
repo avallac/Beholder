@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpAmqDaemonManager;
+namespace Beholder;
 
 class MinionTest extends \PHPUnit_Framework_TestCase
 {
@@ -109,7 +109,9 @@ class MinionTest extends \PHPUnit_Framework_TestCase
             $channel->shouldReceive('basic_cancel')->with($tags['consume'])->once();
         } else {
             $channel->shouldReceive('basic_consume')
-                ->with('testQ', '', false, false, false, false, \Mockery::on(function() { return true;}))
+                ->with('testQ', '', false, false, false, false, \Mockery::on(function () {
+                    return true;
+                }))
                 ->once()->andReturn($tags['consume']);
         }
         $channel->shouldReceive('basic_ack')->with($tags['message'])->once($tags['message']);

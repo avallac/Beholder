@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpAmqDaemonManager;
+namespace Beholder;
 
 use PhpAmqDaemonManager\Message\BeholderStatusGet;
 use PhpAmqpLib\Connection\AbstractConnection;

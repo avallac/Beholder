@@ -1,9 +1,9 @@
 <?php
 
-namespace PhpAmqDaemonManager;
+namespace Beholder;
 
-use PhpAmqDaemonManager\Message\AbstractMessage;
-use PhpAmqDaemonManager\Exception\CantFindMessageViolationException;
+use Beholder\Message\AbstractMessage;
+use Beholder\Exception\CantFindMessageViolationException;
 use PhpAmqpLib\Message\AMQPMessage;
 
 class MessageManager

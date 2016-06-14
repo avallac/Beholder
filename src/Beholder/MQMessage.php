@@ -1,8 +1,8 @@
 <?php
 
-namespace PhpAmqDaemonManager;
+namespace Beholder;
 
-use PhpAmqDaemonManager\Exception\CantFindFieldInMessageViolationException;
+use Beholder\Exception\CantFindFieldInMessageViolationException;
 
 class MQMessage
 {

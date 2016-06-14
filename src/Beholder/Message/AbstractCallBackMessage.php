@@ -1,9 +1,9 @@
 <?php
 
-namespace PhpAmqDaemonManager\Message;
+namespace Beholder\Message;
 
-use PhpAmqDaemonManager\Exception\CantFindMessageViolationException;
-use PhpAmqDaemonManager\MQMessage;
+use Beholder\Exception\CantFindMessageViolationException;
+use Beholder\MQMessage;
 
 abstract class AbstractCallBackMessage extends AbstractMessage
 {

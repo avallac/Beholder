@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpAmqDaemonManager;
+namespace Beholder;
 
 class AbstractMessageTest extends \PHPUnit_Framework_TestCase
 {
@@ -19,17 +19,17 @@ class AbstractMessageTest extends \PHPUnit_Framework_TestCase
 
     public function testGetRequiredFields()
     {
-        $mock = $this->container->mock('\PhpAmqDaemonManager\Message\AbstractMessage')->shouldDeferMissing();
+        $mock = $this->container->mock('\Beholder\Message\AbstractMessage')->shouldDeferMissing();
         $this->setProtectedProperty($mock, 'require', [1,3,4]);
         $this->assertEquals([1,3,4], $mock->getRequiredFields());
     }
 
     /**
-     * @expectedException \PhpAmqDaemonManager\Exception\NotValidMessageViolationException
+     * @expectedException \Beholder\Exception\NotValidMessageViolationException
      */
     public function testRequiredFields()
     {
-        $mock = $this->container->mock('\PhpAmqDaemonManager\Message\AbstractMessage')->shouldDeferMissing();
+        $mock = $this->container->mock('\Beholder\Message\AbstractMessage')->shouldDeferMissing();
         $mock->shouldReceive('getCommand')->andReturn('test.command');
         $this->setProtectedProperty($mock, 'require', ['testField']);
         $mock->validate(new MQMessage(['t' => 1]));
