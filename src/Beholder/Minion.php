@@ -81,6 +81,11 @@ class Minion
         ];
     }
 
+    public function setMessageManager($roleName, $manager)
+    {
+        $this->roles[$roleName] = $manager;
+    }
+
     public function getMessageManager()
     {
         return $this->messageManager;
