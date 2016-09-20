@@ -74,7 +74,7 @@ class Beholder
         $this->messageManager->bind(new BeholderStatusGet(function (MQMessage $message) {
             $currentTime = microtime(true);
             $q = $message->get('queue');
-            foreach ($this->minions as $host) {
+            foreach ($this->minions as &$host) {
                 foreach ($host as &$item) {
                     $item['lastUpdate'] = $currentTime - $item['absoluteLastUpdate'];
                 }
