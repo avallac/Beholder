@@ -63,6 +63,7 @@ class Beholder
                 $this->sendUpdateStatusToMinion($m->get('hostname'), $m->get('role'));
             }
             $this->minions[$m->get('hostname')][$m->get('role')]['curStatus'] = $m->get('status');
+            $this->minions[$m->get('hostname')][$m->get('role')]['lastUpdate'] = microtime(true);
         }));
 
         $this->messageManager->bind(new BeholderAdminStatus(function (MQMessage $m) {
