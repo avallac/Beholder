@@ -36,6 +36,11 @@ class Minion
         $this->initManagementConsume();
     }
 
+    public function setPrefetch($count)
+    {
+        $this->channel->basic_qos(0, $count, true);
+    }
+
     protected function basicConsume($queue, $fn)
     {
         return $this->channel->basic_consume($queue, '', false, false, false, false, $fn);
