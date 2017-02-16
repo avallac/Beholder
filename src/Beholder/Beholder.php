@@ -17,36 +17,39 @@ class Beholder
     public $messageManager;
     protected $fn;
 
-    protected function initMinion($host, $role, $queue = null)
+    protected function initMinion($host, $pid, $role,$queue = null)
     {
         if (!isset($this->minions[$host])) {
             $this->minions[$host] = [];
         }
-        if (!isset($this->minions[$host][$role])) {
-            $this->minions[$host][$role] = ['status' => 1];
+        if (!isset($this->minions[$host][$pid])) {
+            $this->minions[$host][$pid] = [];
+        }
+        if (!isset($this->minions[$host][$pid][$role])) {
+            $this->minions[$host][$pid][$role] = ['status' => 1];
         }
         if ($queue) {
-            $this->minions[$host][$role]['queue'] = $queue;
+            $this->minions[$host][$pid][$role]['queue'] = $queue;
         }
     }
 
-    protected function changeMinionStatus($host, $role, $status)
+    protected function changeMinionStatus($host, $pid, $role, $status)
     {
-        if ($this->minions[$host][$role]['status'] != $status) {
-            $this->minions[$host][$role]['status'] = $status;
-            $this->sendUpdateStatusToMinion($host, $role);
+        if ($this->minions[$host][$pid][$role]['status'] != $status) {
+            $this->minions[$host][$pid][$role]['status'] = $status;
+            $this->sendUpdateStatusToMinion($host, $pid, $role);
         }
     }
 
-    protected function sendUpdateStatusToMinion($host, $role)
+    protected function sendUpdateStatusToMinion($host, $pid, $role)
     {
-        $status = $this->minions[$host][$role]['status'];
-        if (isset($this->minions[$host][$role]['queue'])) {
-            $q = $this->minions[$host][$role]['queue'];
+        $status = $this->minions[$host][$pid][$role]['status'];
+        if (isset($this->minions[$host][$pid][$role]['queue'])) {
+            $q = $this->minions[$host][$pid][$role]['queue'];
             $this->createMessage(new AgentStatusUpdate(), ['role' => $role, 'status' => $status], $q);
         }
         if ($fn = $this->fn) {
-            $fn($host, $role, $status);
+            $fn($host, $pid, $role, $status);
         }
     }
 
@@ -58,17 +61,17 @@ class Beholder
         $this->messageManager = new MessageManager();
         
         $this->messageManager->bind(new BeholderStatusUpdate(function (MQMessage $m) {
-            $this->initMinion($m->get('hostname'), $m->get('role'), $m->get('queue'));
-            if ($this->minions[$m->get('hostname')][$m->get('role')]['status'] !== $m->get('status')) {
-                $this->sendUpdateStatusToMinion($m->get('hostname'), $m->get('role'));
+            $this->initMinion($m->get('hostname'), $m->get('pid'),$m->get('role'), $m->get('queue'));
+            if ($this->minions[$m->get('hostname')][$m->get('pid')][$m->get('role')]['status'] !== $m->get('status')) {
+                $this->sendUpdateStatusToMinion($m->get('hostname'), $m->get('pid'), $m->get('role'));
             }
-            $this->minions[$m->get('hostname')][$m->get('role')]['curStatus'] = $m->get('status');
-            $this->minions[$m->get('hostname')][$m->get('role')]['absoluteLastUpdate'] = microtime(true);
+            $this->minions[$m->get('hostname')][$m->get('pid')][$m->get('role')]['curStatus'] = $m->get('status');
+            $this->minions[$m->get('hostname')][$m->get('pid')][$m->get('role')]['absoluteLastUpdate'] = microtime(true);
         }));
 
         $this->messageManager->bind(new BeholderAdminStatus(function (MQMessage $m) {
-            $this->initMinion($m->get('hostname'), $m->get('role'));
-            $this->changeMinionStatus($m->get('hostname'), $m->get('role'), $m->get('status'));
+            $this->initMinion($m->get('hostname'), $m->get('pid'), $m->get('role'));
+            $this->changeMinionStatus($m->get('hostname'), $m->get('pid'), $m->get('role'), $m->get('status'));
         }));
 
         $this->messageManager->bind(new BeholderStatusGet(function (MQMessage $message) {

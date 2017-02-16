@@ -38,7 +38,7 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         );
 
         $beholder = new Beholder($connection, 'testManagementQ');
-        $agent = new Minion($connection, 'testName', 'testManagementQ');
+        $agent = new Minion($connection, 'testName', 1, 'testManagementQ');
         $agent->bindRole('integrationTest', 'testQ', function () {
 
         });

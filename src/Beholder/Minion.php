@@ -13,6 +13,7 @@ class Minion
 {
     protected $myQueueName;
     protected $hostname;
+    protected $pid;
     protected $adminQueue;
     /** @var AMQPChannel channel */
     protected $channel;
@@ -23,13 +24,14 @@ class Minion
     /** @var MessageManager */
     protected $messageManager;
 
-    public function __construct(AbstractConnection $connection, $hostname, $adminQueue, $roundTimer = 60)
+    public function __construct(AbstractConnection $connection, $hostname, $pid, $adminQueue, $roundTimer = 60)
     {
         $this->connection = $connection;
         $this->channel = $this->connection->channel();
         $this->channel->basic_qos(0, 1, true);
         list($this->myQueueName, ,) = $this->channel->queue_declare("");
         $this->hostname = $hostname;
+        $this->pid = $pid;
         $this->adminQueue = $adminQueue;
         $this->roundTimer = $roundTimer;
         $this->messageManager = new MessageManager();
@@ -112,6 +114,7 @@ class Minion
                     'role' => $roleName,
                     'status' => $this->roles[$roleName]['status'],
                     'queue' => $this->myQueueName,
+                    'pid' => $this->pid
                 ];
                 $this->roles[$roleName]['lastUpdated'] = $now;
                 $this->createMessage(new BeholderStatusUpdate(), $update);
