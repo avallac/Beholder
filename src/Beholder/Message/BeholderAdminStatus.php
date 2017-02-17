@@ -5,7 +5,7 @@ namespace Beholder\Message;
 class BeholderAdminStatus extends AbstractCallBackMessage
 {
     protected $callBack;
-    protected $require = ['hostname', 'role', 'status'];
+    protected $require = ['hostname', 'pid', 'role', 'status'];
 
     public function getCommand()
     {
