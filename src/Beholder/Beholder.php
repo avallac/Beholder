@@ -78,8 +78,10 @@ class Beholder
             $currentTime = microtime(true);
             $q = $message->get('queue');
             foreach ($this->minions as &$host) {
-                foreach ($host as &$item) {
-                    $item['lastUpdate'] = $currentTime - $item['absoluteLastUpdate'];
+                foreach ($host as &$pid) {
+                    foreach ($pid as &$item) {
+                        $item['lastUpdate'] = $currentTime - $item['absoluteLastUpdate'];
+                    }
                 }
             }
             $this->createMessage(new AdminMinionStatus(), ['minions' => $this->minions], $q);
