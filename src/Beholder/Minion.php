@@ -55,13 +55,15 @@ class Minion
             $role = $message->get('role');
             if (isset($this->roles[$role])) {
                 if ($this->roles[$role]['status'] !== $message->get('status')) {
-                    if ($message->get('status') == 1) {
+                    if ($message->get('status') === 1) {
                         $fnCallback = function ($rabbitMessage) use ($role) {
                             $this->roles[$role]['messageManager']->handle($rabbitMessage);
                             $this->channel->basic_ack($rabbitMessage->delivery_info['delivery_tag']);
                         };
                         $workQueue = $this->roles[$role]['workQueue'];
                         $this->roles[$role]['consumeTag'] = $this->basicConsume($workQueue, $fnCallback);
+                    } elseif ($message->get('status') === -1) {
+                        throw new \Exception('signal -1 from beholder');
                     } else {
                         $this->channel->basic_cancel($this->roles[$role]['consumeTag']);
                         $this->roles[$role]['consumeTag'] = null;

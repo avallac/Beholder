@@ -2,6 +2,7 @@
 
 namespace Beholder;
 
+use Beholder\Exception\DuplicatePIDException;
 use Beholder\Message\AbstractMessage;
 use Beholder\Message\AdminMinionStatus;
 use Beholder\Message\AgentStatusUpdate;
@@ -13,43 +14,35 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 class Beholder
 {
+    const TIMETOLIVE = 600;
+    const STATUS_ACTIVE = 1;
     public $minions = [];
+    public $minionStatistic = [];
     public $messageManager;
-    protected $fn;
 
-    protected function initMinion($host, $pid, $role,$queue = null)
+    protected function sendUpdateStatusToMinion(MinionStatus $minionRecord)
     {
-        if (!isset($this->minions[$host])) {
-            $this->minions[$host] = [];
-        }
-        if (!isset($this->minions[$host][$pid])) {
-            $this->minions[$host][$pid] = [];
-        }
-        if (!isset($this->minions[$host][$pid][$role])) {
-            $this->minions[$host][$pid][$role] = ['status' => 1];
-        }
-        if ($queue) {
-            $this->minions[$host][$pid][$role]['queue'] = $queue;
+        $status =$minionRecord->getTargetStatus();
+        if ($queue = $minionRecord->getQueue()) {
+            $role = $minionRecord->getRole();
+            var_dump(['q' => $queue, 'role' => $role, 'status' => $status]);
+            $this->createMessage(new AgentStatusUpdate(), ['role' => $role, 'status' => $status], $queue);
         }
     }
-
-    protected function changeMinionStatus($host, $pid, $role, $status)
+    protected function sendHaltToMinion($role, $queue)
     {
-        if ($this->minions[$host][$pid][$role]['status'] != $status) {
-            $this->minions[$host][$pid][$role]['status'] = $status;
-            $this->sendUpdateStatusToMinion($host, $pid, $role);
-        }
+        var_dump(['q' => $queue, 'role' => $role, 'status' => -1]);
+        $this->createMessage(new AgentStatusUpdate(), ['status' => -1, 'role' => $role], $queue);
     }
 
-    protected function sendUpdateStatusToMinion($host, $pid, $role)
+    protected function syncStatus()
     {
-        $status = $this->minions[$host][$pid][$role]['status'];
-        if (isset($this->minions[$host][$pid][$role]['queue'])) {
-            $q = $this->minions[$host][$pid][$role]['queue'];
-            $this->createMessage(new AgentStatusUpdate(), ['role' => $role, 'status' => $status], $q);
-        }
-        if ($fn = $this->fn) {
-            $fn($host, $pid, $role, $status);
+        var_dump($this->minionStorage->getAll());
+        /** @var MinionStatus $minionRecord */
+        foreach ($this->minionStorage->getAll() as $minionRecord) {
+            if ($minionRecord->getTargetStatus() !== $minionRecord->getStatus()) {
+                $this->sendUpdateStatusToMinion($minionRecord);
+            }
         }
     }
 
@@ -59,32 +52,30 @@ class Beholder
         $this->channel = $this->connection->channel();
         $this->adminQueue = $adminQueue;
         $this->messageManager = new MessageManager();
-        
+        $this->minionStorage = new MinionStorage();
+
         $this->messageManager->bind(new BeholderStatusUpdate(function (MQMessage $m) {
-            $this->initMinion($m->get('hostname'), $m->get('pid'),$m->get('role'), $m->get('queue'));
-            if ($this->minions[$m->get('hostname')][$m->get('pid')][$m->get('role')]['status'] !== $m->get('status')) {
-                $this->sendUpdateStatusToMinion($m->get('hostname'), $m->get('pid'), $m->get('role'));
+            try {
+                $minionRecord = $this->minionStorage->searchOrCreate($m);
+                $minionRecord->setStatus($m->get('status'));
+                $minionRecord->update();
+                $this->minionStorage->update();
+                $this->syncStatus();
+            } catch (DuplicatePIDException $exception) {
+                $this->sendHaltToMinion($m->get('role'), $m->get('queue'));
             }
-            $this->minions[$m->get('hostname')][$m->get('pid')][$m->get('role')]['curStatus'] = $m->get('status');
-            $this->minions[$m->get('hostname')][$m->get('pid')][$m->get('role')]['absoluteLastUpdate'] = microtime(true);
         }));
 
         $this->messageManager->bind(new BeholderAdminStatus(function (MQMessage $m) {
-            $this->initMinion($m->get('hostname'), $m->get('pid'), $m->get('role'));
-            $this->changeMinionStatus($m->get('hostname'), $m->get('pid'), $m->get('role'), $m->get('status'));
+            $this->minionStorage->setLimit($m);
+            $this->minionStorage->update();
+            $this->syncStatus();
         }));
 
         $this->messageManager->bind(new BeholderStatusGet(function (MQMessage $message) {
-            $currentTime = microtime(true);
             $q = $message->get('queue');
-            foreach ($this->minions as &$host) {
-                foreach ($host as &$pid) {
-                    foreach ($pid as &$item) {
-                        $item['lastUpdate'] = $currentTime - $item['absoluteLastUpdate'];
-                    }
-                }
-            }
-            $this->createMessage(new AdminMinionStatus(), ['minions' => $this->minions], $q);
+            $minions =  $this->minionStorage->getAll();
+            $this->createMessage(new AdminMinionStatus(), ['minions' => $minions], $q);
         }));
 
         $callbackMng = function ($rabbitMessage) {
@@ -98,11 +89,6 @@ class Beholder
     {
         $msg = new AMQPMessage($message->create($update));
         $this->channel->basic_publish($msg, '', $q);
-    }
-
-    public function addHandler($fn)
-    {
-        $this->fn = $fn;
     }
 
     public function run()
