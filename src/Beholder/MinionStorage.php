@@ -57,9 +57,7 @@ class MinionStorage
                 throw new DuplicatePIDException();
             }
         }
-        if ($m->exists('infoBlock')) {
-            $this->minions[$host][$role][$pid]->setInfoBlock($m->get('infoBlock'));
-        }
+        $this->minions[$host][$role][$pid]->setInfoBlock($m->get('infoBlock'));
         if (!isset($this->control[$host][$role]['limit'])) {
             $this->control[$host][$role]['limit'] = -1;
         }
