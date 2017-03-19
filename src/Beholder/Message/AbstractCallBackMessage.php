@@ -3,6 +3,7 @@
 namespace Beholder\Message;
 
 use Beholder\Exception\CantFindMessageViolationException;
+use Beholder\Minion;
 use Beholder\MQMessage;
 
 abstract class AbstractCallBackMessage extends AbstractMessage
@@ -20,7 +21,7 @@ abstract class AbstractCallBackMessage extends AbstractMessage
         }
     }
 
-    public function handle(MQMessage $message)
+    public function handle(MQMessage $message, Minion $minion)
     {
         $fn = $this->callBack;
         if ($fn) {

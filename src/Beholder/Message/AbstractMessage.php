@@ -3,6 +3,7 @@
 namespace Beholder\Message;
 
 use Beholder\Exception\NotValidMessageViolationException;
+use Beholder\Minion;
 use Beholder\MQMessage;
 
 abstract class AbstractMessage
@@ -44,5 +45,5 @@ abstract class AbstractMessage
     }
 
     abstract public function getCommand();
-    abstract public function handle(MQMessage $message);
+    abstract public function handle(MQMessage $message, Minion $minion);
 }

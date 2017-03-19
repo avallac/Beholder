@@ -15,10 +15,10 @@ class MessageManager
         $this->messages[$message->register()] = $message;
     }
 
-    public function handle(AMQPMessage $message)
+    public function handle(AMQPMessage $message, Minion $minion)
     {
         $msg = new MQMessage($message->body);
-        return $this->getMessage($msg->get('command'))->handle($msg);
+        return $this->getMessage($msg->get('command'))->handle($msg, $minion);
     }
 
     public function getMessageKeys()

@@ -12,6 +12,7 @@ use \PhpAmqpLib\Message\AMQPMessage;
 
 class Minion
 {
+    protected $infoBlock;
     protected $myQueueName;
     protected $hostname;
     protected $pid;
@@ -35,6 +36,11 @@ class Minion
         $this->adminQueue = $adminQueue;
         $this->messageManager = new MessageManager();
         $this->initManagementConsume();
+    }
+
+    public function setInfoBlock($infoBlock)
+    {
+        $this->infoBlock = $infoBlock;
     }
 
     public function setPrefetch($count)
@@ -83,7 +89,7 @@ class Minion
         }));
         $fnCallback = function ($rabbitMessage) {
             try {
-                $this->messageManager->handle($rabbitMessage);
+                $this->messageManager->handle($rabbitMessage, $this);
                 $this->channel->basic_ack($rabbitMessage->delivery_info['delivery_tag']);
             } catch (KillSignalException $e) {
                 foreach (array_keys($this->roles) as $role) {
@@ -134,7 +140,8 @@ class Minion
                     'role' => $roleName,
                     'status' => $this->roles[$roleName]['status'],
                     'queue' => $this->myQueueName,
-                    'pid' => $this->pid
+                    'pid' => $this->pid,
+                    'infoBlock' => $this->infoBlock
                 ];
                 $this->roles[$roleName]['lastUpdated'] = $now;
                 $this->createMessage(new BeholderStatusUpdate(), $update);
