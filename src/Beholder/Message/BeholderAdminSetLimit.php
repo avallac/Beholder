@@ -2,13 +2,13 @@
 
 namespace Beholder\Message;
 
-class BeholderAdminStatus extends AbstractCallBackMessage
+class BeholderAdminSetLimit extends AbstractCallBackMessage
 {
     protected $callBack;
     protected $require = ['host', 'role', 'limit'];
 
     public function getCommand()
     {
-        return 'beholder.admin.status';
+        return 'beholder.admin.limit';
     }
 }

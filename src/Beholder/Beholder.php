@@ -6,7 +6,8 @@ use Beholder\Exception\DuplicatePIDException;
 use Beholder\Message\AbstractMessage;
 use Beholder\Message\AdminMinionStatus;
 use Beholder\Message\AgentStatusUpdate;
-use Beholder\Message\BeholderAdminStatus;
+use Beholder\Message\BeholderAdminKill;
+use Beholder\Message\BeholderAdminSetLimit;
 use Beholder\Message\BeholderStatusGet;
 use Beholder\Message\BeholderStatusUpdate;
 use PhpAmqpLib\Connection\AbstractConnection;
@@ -15,7 +16,9 @@ use PhpAmqpLib\Message\AMQPMessage;
 class Beholder
 {
     const TIMETOLIVE = 600;
-    const STATUS_ACTIVE = 1;
+    const TIMEUPDATE = 60;
+    const SIG_DUP = -1;
+    const SIG_KILL = -2;
     public $minions = [];
     public $minionStatistic = [];
     public $messageManager;
@@ -25,19 +28,16 @@ class Beholder
         $status =$minionRecord->getTargetStatus();
         if ($queue = $minionRecord->getQueue()) {
             $role = $minionRecord->getRole();
-            var_dump(['q' => $queue, 'role' => $role, 'status' => $status]);
             $this->createMessage(new AgentStatusUpdate(), ['role' => $role, 'status' => $status], $queue);
         }
     }
-    protected function sendHaltToMinion($role, $queue)
+    protected function sendHaltToMinion($role, $queue, $code = -1)
     {
-        var_dump(['q' => $queue, 'role' => $role, 'status' => -1]);
-        $this->createMessage(new AgentStatusUpdate(), ['status' => -1, 'role' => $role], $queue);
+        $this->createMessage(new AgentStatusUpdate(), ['status' => $code, 'role' => $role], $queue);
     }
 
     protected function syncStatus()
     {
-        var_dump($this->minionStorage->getAll());
         /** @var MinionStatus $minionRecord */
         foreach ($this->minionStorage->getAll() as $minionRecord) {
             if ($minionRecord->getTargetStatus() !== $minionRecord->getStatus()) {
@@ -66,8 +66,16 @@ class Beholder
             }
         }));
 
-        $this->messageManager->bind(new BeholderAdminStatus(function (MQMessage $m) {
+        $this->messageManager->bind(new BeholderAdminSetLimit(function (MQMessage $m) {
             $this->minionStorage->setLimit($m);
+            $this->minionStorage->update();
+            $this->syncStatus();
+        }));
+
+        $this->messageManager->bind(new BeholderAdminKill(function (MQMessage $m) {
+            if ($minionRecord = $this->minionStorage->search($m)) {
+                $this->sendHaltToMinion($minionRecord->getRole(), $minionRecord->getQueue(), -2);
+            }
             $this->minionStorage->update();
             $this->syncStatus();
         }));

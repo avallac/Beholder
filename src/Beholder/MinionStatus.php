@@ -7,6 +7,7 @@ class MinionStatus implements \JsonSerializable
     const TIMETOLIVE = 600;
     const ACTIVE = 1;
     const OFF = 0;
+    const HALTED = -1;
     protected $status;
     protected $queue;
     protected $pid;
@@ -56,6 +57,9 @@ class MinionStatus implements \JsonSerializable
 
     public function isDown()
     {
+        if ($this->status === self::HALTED) {
+            return true;
+        }
         $currentTime = microtime(true);
         if (($this->lastUpdate + Beholder::TIMETOLIVE) < $currentTime) {
             return true;

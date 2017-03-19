@@ -2,6 +2,7 @@
 
 namespace Beholder;
 
+use Beholder\Exception\KillSignalException;
 use Beholder\Message\AbstractMessage;
 use Beholder\Message\AgentStatusUpdate;
 use Beholder\Message\BeholderStatusUpdate;
@@ -20,11 +21,10 @@ class Minion
     protected $roles = [];
     /** @var AbstractConnection  */
     protected $connection;
-    protected $roundTimer;
     /** @var MessageManager */
     protected $messageManager;
 
-    public function __construct(AbstractConnection $connection, $hostname, $pid, $adminQueue, $roundTimer = 60)
+    public function __construct(AbstractConnection $connection, $hostname, $pid, $adminQueue)
     {
         $this->connection = $connection;
         $this->channel = $this->connection->channel();
@@ -33,7 +33,6 @@ class Minion
         $this->hostname = $hostname;
         $this->pid = $pid;
         $this->adminQueue = $adminQueue;
-        $this->roundTimer = $roundTimer;
         $this->messageManager = new MessageManager();
         $this->initManagementConsume();
     }
@@ -48,9 +47,17 @@ class Minion
         return $this->channel->basic_consume($queue, '', false, false, false, false, $fn);
     }
 
+    protected function basicCancel($role)
+    {
+        if ($this->roles[$role]['consumeTag']) {
+            $this->channel->basic_cancel($this->roles[$role]['consumeTag']);
+            $this->roles[$role]['consumeTag'] = null;
+        }
+
+    }
+
     protected function initManagementConsume()
     {
-
         $this->messageManager->bind(new AgentStatusUpdate(function (MQMessage $message) {
             $role = $message->get('role');
             if (isset($this->roles[$role])) {
@@ -62,11 +69,12 @@ class Minion
                         };
                         $workQueue = $this->roles[$role]['workQueue'];
                         $this->roles[$role]['consumeTag'] = $this->basicConsume($workQueue, $fnCallback);
-                    } elseif ($message->get('status') === -1) {
-                        throw new \Exception('signal -1 from beholder');
+                    } elseif ($message->get('status') === Beholder::SIG_DUP) {
+                        exit;
+                    } elseif ($message->get('status') === Beholder::SIG_KILL) {
+                        throw new KillSignalException();
                     } else {
-                        $this->channel->basic_cancel($this->roles[$role]['consumeTag']);
-                        $this->roles[$role]['consumeTag'] = null;
+                        $this->basicCancel($role);
                     }
                     $this->roles[$role]['status'] = $message->get('status');
                     $this->roles[$role]['lastUpdated'] = 0;
@@ -74,8 +82,18 @@ class Minion
             }
         }));
         $fnCallback = function ($rabbitMessage) {
-            $this->messageManager->handle($rabbitMessage);
-            $this->channel->basic_ack($rabbitMessage->delivery_info['delivery_tag']);
+            try {
+                $this->messageManager->handle($rabbitMessage);
+                $this->channel->basic_ack($rabbitMessage->delivery_info['delivery_tag']);
+            } catch (KillSignalException $e) {
+                foreach (array_keys($this->roles) as $role) {
+                    $this->roles[$role]['status'] = MinionStatus::HALTED;
+                    $this->roles[$role]['lastUpdated'] = 0;
+                    $this->sendReport();
+                    $this->basicCancel($role);
+                }
+                throw $e;
+            }
         };
         $this->basicConsume($this->myQueueName, $fnCallback);
     }
@@ -110,7 +128,7 @@ class Minion
     {
         $now = microtime(true);
         foreach (array_keys($this->roles) as $roleName) {
-            if ($now - $this->roles[$roleName]['lastUpdated'] > $this->roundTimer) {
+            if ($now - $this->roles[$roleName]['lastUpdated'] > Beholder::TIMEUPDATE) {
                 $update = [
                     'hostname'=> $this->hostname,
                     'role' => $roleName,
@@ -138,7 +156,7 @@ class Minion
             $read = [$socket];
             $write = null;
             $except = null;
-            $changeStreamsCount = stream_select($read, $write, $except, $this->roundTimer);
+            $changeStreamsCount = stream_select($read, $write, $except, Beholder::TIMEUPDATE);
             if ($changeStreamsCount === false) {
                 throw new \RuntimeException();
             } elseif ($changeStreamsCount > 0) {

@@ -3,6 +3,7 @@
 namespace Beholder;
 
 use Beholder\Message\AdminMinionStatus;
+use Beholder\Message\BeholderAdminKill;
 use Beholder\Message\BeholderStatusGet;
 use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -40,5 +41,12 @@ class Admin
             $this->channel->wait(null, false, 3);
         }
         return $ret;
+    }
+
+    public function kill($host, $pid, $role)
+    {
+        $message = new BeholderAdminKill();
+        $msg = new AMQPMessage($message->create(['role' => $role, 'hostname' => $host, 'pid' => $pid]));
+        $this->channel->basic_publish($msg, '', $this->adminQueue);
     }
 }

@@ -27,13 +27,29 @@ class MinionStorage
      * @param MQMessage $m
      * @return MinionStatus
      */
+    public function search(MQMessage $m)
+    {
+        $host = $m->get('hostname');
+        $role = $m->get('role');
+        $pid = $m->get('pid');
+        if (isset($this->minions[$host][$role][$pid])) {
+            return $this->minions[$host][$role][$pid];
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * @param MQMessage $m
+     * @return MinionStatus
+     */
     public function searchOrCreate(MQMessage $m)
     {
         $host = $m->get('hostname');
         $role = $m->get('role');
         $pid = $m->get('pid');
         $queue = $m->get('queue');
-        if (!isset($this->minions[$host][$role][$pid])) {
+        if (!$this->search($m)) {
             $this->minions[$host][$role][$pid] = new MinionStatus($host, $role, $pid, $queue);
         } else {
             $currentQ = $this->minions[$host][$role][$pid]->getQueue();
