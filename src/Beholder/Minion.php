@@ -38,11 +38,13 @@ class Minion
         $this->initManagementConsume();
     }
 
-    public function setInfoBlock($infoBlock)
+    public function setInfoBlock($infoBlock, $flush = false)
     {
         $this->infoBlock = $infoBlock;
-        foreach (array_keys($this->roles) as $role) {
-            $this->roles[$role]['lastUpdated'] = 0;
+        if ($flush) {
+            foreach (array_keys($this->roles) as $role) {
+                $this->roles[$role]['lastUpdated'] = 0;
+            }
         }
     }
 
