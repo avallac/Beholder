@@ -70,7 +70,7 @@ class Minion
                 if ($this->roles[$role]['status'] !== $message->get('status')) {
                     if ($message->get('status') === 1) {
                         $fnCallback = function ($rabbitMessage) use ($role) {
-                            $this->roles[$role]['messageManager']->handle($rabbitMessage);
+                            $this->roles[$role]['messageManager']->handle($rabbitMessage, $this);
                             $this->channel->basic_ack($rabbitMessage->delivery_info['delivery_tag']);
                         };
                         $workQueue = $this->roles[$role]['workQueue'];
