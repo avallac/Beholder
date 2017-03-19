@@ -87,7 +87,7 @@ class Beholder
         }));
 
         $callbackMng = function ($rabbitMessage) {
-            $this->messageManager->handle($rabbitMessage);
+            $this->messageManager->handle($rabbitMessage, $this);
             $this->channel->basic_ack($rabbitMessage->delivery_info['delivery_tag']);
         };
         return $this->channel->basic_consume($this->adminQueue, '', false, false, false, false, $callbackMng);
