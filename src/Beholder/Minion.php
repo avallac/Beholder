@@ -41,6 +41,9 @@ class Minion
     public function setInfoBlock($infoBlock)
     {
         $this->infoBlock = $infoBlock;
+        foreach (array_keys($this->roles) as $role) {
+            $this->roles[$role]['lastUpdated'] = 0;
+        }
     }
 
     public function setPrefetch($count)
