@@ -15,6 +15,7 @@ class MinionStatus implements \JsonSerializable
     protected $host;
     protected $targetStatus;
     protected $lastUpdate;
+    protected $infoBlock;
 
     public function __construct($host, $role, $pid, $queue)
     {
@@ -23,6 +24,11 @@ class MinionStatus implements \JsonSerializable
         $this->pid = $pid;
         $this->queue = $queue;
         $this->status = self::OFF;
+    }
+
+    public function setInfoBlock($infoBlock)
+    {
+        return $this->infoBlock = $infoBlock;
     }
 
     public function getStatus()
