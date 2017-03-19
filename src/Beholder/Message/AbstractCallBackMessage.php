@@ -21,7 +21,7 @@ abstract class AbstractCallBackMessage extends AbstractMessage
         }
     }
 
-    public function handle(MQMessage $message, Minion $minion)
+    public function handle(MQMessage $message, $client)
     {
         $fn = $this->callBack;
         if ($fn) {

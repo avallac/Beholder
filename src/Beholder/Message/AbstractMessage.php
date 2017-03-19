@@ -45,5 +45,5 @@ abstract class AbstractMessage
     }
 
     abstract public function getCommand();
-    abstract public function handle(MQMessage $message, Minion $minion);
+    abstract public function handle(MQMessage $message, $client);
 }

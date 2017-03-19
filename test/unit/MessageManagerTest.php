@@ -21,7 +21,7 @@ class MessageManagerTest extends \PHPUnit_Framework_TestCase
     {
         $message = \Mockery::mock('\PhpAmqpLib\Message\AMQPMessage');
         $message->body = new MQMessage(['command' => 'test.test']);
-        $return = $this->manager->handle($message);
+        $return = $this->manager->handle($message, $this);
         $this->assertSame('test string', $return);
     }
 
@@ -32,7 +32,7 @@ class MessageManagerTest extends \PHPUnit_Framework_TestCase
     {
         $message = \Mockery::mock('\PhpAmqpLib\Message\AMQPMessage');
         $message->body = new MQMessage(['command' => 'bad.test']);
-        $return = $this->manager->handle($message);
+        $return = $this->manager->handle($message, $this);
         $this->assertSame('test string', $return);
     }
 
