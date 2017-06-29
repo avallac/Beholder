@@ -18,6 +18,10 @@ class MessageManager
     public function handle(AMQPMessage $message, $client)
     {
         $msg = new MQMessage($message->body);
+        $property = $message->get_properties();
+        if (isset($property['priority'])) {
+            $msg->setPriority($property['priority']);
+        }
         return $this->getMessage($msg->get('command'))->handle($msg, $client);
     }
 

@@ -7,6 +7,17 @@ use Beholder\Exception\CantFindFieldInMessageViolationException;
 class MQMessage
 {
     private $data;
+    protected $priority = null;
+
+    public function setPriority($priority)
+    {
+        $this->priority = $priority;
+    }
+
+    public function getPriority()
+    {
+        return $this->priority;
+    }
 
     public function __construct($param)
     {
